@@ -1,0 +1,26 @@
+# ── Core numerics ─────────────────────────────────────────────────────────────
+numpy==1.26.4
+# scipy 1.10.1 does not exist on PyPI. 1.11.4 is the oldest stable release
+# compatible with Python 3.12 and numpy 1.26.x
+scipy==1.11.4
+
+# ── Data ──────────────────────────────────────────────────────────────────────
+# pandas 2.0.3 fails to build on Python 3.12 (missing pkg_resources).
+# 2.2.0 is the first LTS-style release with full Python 3.12 support.
+pandas==2.2.0
+statsmodels==0.14.1
+yfinance==0.2.36
+pandas-datareader==0.10.0
+
+# ── ML ────────────────────────────────────────────────────────────────────────
+scikit-learn==1.3.2
+# imbalanced-learn 0.11.0 is the last version compatible with scikit-learn 1.3.x
+imbalanced-learn==0.11.0
+shap==0.44.1
+
+# ── AWS ───────────────────────────────────────────────────────────────────────
+boto3==1.40.69
+sagemaker==2.189.0
+
+# ── Visualisation ─────────────────────────────────────────────────────────────
+matplotlib==3.8.4
