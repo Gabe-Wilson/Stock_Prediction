@@ -11,10 +11,6 @@ import tarfile
 import tempfile
 
 import boto3
-import sagemaker
-from sagemaker.predictor import Predictor
-from sagemaker.serializers import CSVSerializer
-from sagemaker.deserializers import JSONDeserializer
 
 from sklearn.pipeline import Pipeline
 import shap
@@ -48,7 +44,6 @@ def get_session(aws_id, aws_secret, aws_token):
     )
 
 session    = get_session(aws_id, aws_secret, aws_token)
-sm_session = sagemaker.Session(boto_session=session)
 
 # ── Load model metadata (column names saved by the notebook) ──────────────────
 @st.cache_resource
@@ -120,23 +115,17 @@ def load_shap_explainer(_session, bucket, s3_key, local_path):
 
 # ── Prediction ────────────────────────────────────────────────────────────────
 def call_model_api(input_df):
-    """
-    Send the last row of input_df to the SageMaker endpoint as CSV.
-    inference_pair.py expects: <col0_price>,<col1_price>
-    Returns (prediction_dict, status_code).
-    """
-    predictor = Predictor(
-        endpoint_name=MODEL_INFO["endpoint"],
-        sagemaker_session=sm_session,
-        serializer=CSVSerializer(),    # inference_pair.py input_fn handles text/csv
-        deserializer=JSONDeserializer()
-    )
-
+    runtime_client = session.client('sagemaker-runtime', region_name='us-east-1')
+    row_csv = ','.join(str(v) for v in input_df.iloc[-1].values)
+    
     try:
-        # Send only the new input row (last row appended by the app)
-        row_csv = ','.join(str(v) for v in input_df.iloc[-1].values)
-        result  = predictor.predict(row_csv)
-        # result = {"prediction": int, "probabilities": [...]}
+        response = runtime_client.invoke_endpoint(
+            EndpointName=MODEL_INFO["endpoint"],
+            ContentType='text/csv',
+            Accept='application/json',
+            Body=row_csv
+        )
+        result = json.loads(response['Body'].read().decode('utf-8'))
         return result, 200
     except Exception as e:
         return f"Error: {str(e)}", 500
